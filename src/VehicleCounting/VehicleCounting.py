@@ -51,6 +51,7 @@ def processVideo(videoFilename):
     else:
         width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print('dump width,height:{},{}'.format(width,height))
 
     # background subtractor
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG();
@@ -77,6 +78,7 @@ def processVideo(videoFilename):
         # step 3: vehicle location
         detect_zone = np.copy(objects[height-24-width_DVL:height-24, 0:frame.shape[1]])
         tmp_conv = vehicle_location(detect_zone, width_lane, width_DVL)
+
         # step 4: vehicle counting
         num = 0; space = 20; min = 10000
         # detect all the peak candidates
