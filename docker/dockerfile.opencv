@@ -1,0 +1,75 @@
+FROM logickee/ubuntu_16_04_gnome
+
+# https://github.com/kavolorn/Docker-OpenCV/blob/master/Dockerfile
+
+RUN apt-get  install -qqy libopencv-dev
+RUN apt-get  install -qqy build-essential
+RUN apt-get  install -qqy checkinstall
+RUN apt-get  install -qqy cmake
+RUN apt-get  install -qqy pkg-config
+RUN apt-get  install -qqy yasm
+RUN apt-get  install -qqy libjpeg-dev
+RUN apt-get  install -qqy libjasper-dev
+RUN apt-get  install -qqy libavcodec-dev
+RUN apt-get  install -qqy libavformat-dev
+RUN apt-get  install -qqy libswscale-dev
+RUN apt-get  install -qqy libdc1394-22-dev
+RUN apt-get  install -qqy libgstreamer0.10-dev
+RUN apt-get  install -qqy libgstreamer-plugins-base0.10-dev
+RUN apt-get  install -qqy libv4l-dev
+RUN apt-get  install -qqy python-dev
+RUN apt-get  install -qqy python-numpy
+RUN apt-get  install -qqy libtbb-dev
+RUN apt-get  install -qqy libqt4-dev
+RUN apt-get  install -qqy libgtk2.0-dev
+RUN apt-get  install -qqy libfaac-dev
+RUN apt-get  install -qqy libmp3lame-dev
+RUN apt-get  install -qqy libopencore-amrnb-dev
+RUN apt-get  install -qqy libopencore-amrwb-dev
+RUN apt-get  install -qqy libtheora-dev
+RUN apt-get  install -qqy libvorbis-dev
+RUN apt-get  install -qqy libxvidcore-dev
+RUN apt-get  install -qqy x264
+RUN apt-get  install -qqy v4l-utils
+RUN apt-get  install -qqy libtiff5-dev
+RUN apt-get  install -qqy libjpeg62-dev
+RUN apt-get  install -qqy ffmpeg
+RUN apt-get  install -qqy libatlas-base-dev
+RUN apt-get  install -qqy gfortran
+
+
+RUN apt-get install -qqy curl
+RUN curl -sL https://github.com/Itseez/opencv/archive/3.1.0.zip > opencv.zip
+RUN unzip opencv.zip
+
+RUN curl -sL https://github.com/Itseez/opencv_contrib/archive/3.1.0.zip > opencv_contrib.zip
+RUN unzip opencv_contrib.zip
+
+
+
+RUN cd opencv-3.1.0/cmake && cmake \
+    -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D FORCE_VTK=ON \
+    -D BUILD_NEW_PYTHON_SUPPORT=ON \
+    -D INSTALL_C_EXAMPLES=ON \
+    -D INSTALL_PYTHON_EXAMPLES=ON \
+    -D WITH_TBB=ON \
+    -D WITH_V4L=ON \
+    -D WITH_QT=ON \
+    -D WITH_GTK=ON \
+    -D WITH_GTK2=ON \
+    -D WITH_OPENGL=ON \
+    -D WITH_CUBLAS=ON \
+    -D CUDA_NVCC_FLAGS='-D_FORCE_INLINES' \
+    -D WITH_GDAL=ON \
+    -D WITH_XINE=ON \
+    -D BUILD_EXAMPLES=ON \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-3.1.0/modules \
+    -D WITH_FFMPEG=ON ..
+
+RUN cd opencv-3.1.0/cmake && \
+    make -j48 && make install
+
+# RUN cd /usr/local/lib/python3.5/dist-packages && \
+#     ln -s /opencv/cmake/lib/cv2.s0 cv2.so

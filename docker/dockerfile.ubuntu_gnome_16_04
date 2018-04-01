@@ -1,0 +1,28 @@
+FROM ubuntu:16.04
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV USER root
+
+
+RUN sed -i 's/archive.ubuntu.com\/ubuntu/ftp.cuhk.edu.hk\/pub\/Linux\/ubuntu/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com\/ubuntu/ftp.cuhk.edu.hk\/pub\/Linux\/ubuntu/g' /etc/apt/sources.list &&\
+    apt-get update && apt-get upgrade -y
+
+
+RUN apt-get update && \
+    apt-get install -qqy --no-install-recommends ubuntu-desktop && \
+    apt-get install -qqy --no-install-recommends gnome-panel gnome-settings-daemon metacity nautilus gnome-terminal && \
+    apt-get install -qqy --no-install-recommends tightvncserver && \
+    mkdir /root/.vnc
+
+ADD xstartup /root/.vnc/xstartup
+ADD passwd /root/.vnc/passwd
+
+RUN chmod 600 /root/.vnc/passwd
+
+CMD /usr/bin/vncserver :1 -geometry 1280x800 -depth 24 && tail -f /root/.vnc/*:1.log
+
+EXPOSE 5901
+
+RUN apt-get install -qqy apt-utils wget git
+RUN apt-get autoremove -y
