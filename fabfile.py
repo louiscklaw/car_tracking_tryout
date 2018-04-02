@@ -13,6 +13,19 @@ docker_settings = {
 
 TEST_IMAGE_NAME = 'test_ubuntu_opencv'
 
+
+from fabric.colors import *
+
+
+def print_status(text): print(green(text))
+
+
+def print_warnings(text): print(yellow(text))
+
+
+def print_error(text): print(red(text))
+
+
 from multiprocessing import Pool
 
 
@@ -41,14 +54,19 @@ docker push logickee/ubuntu_opencv
 
 @task
 def sync_proj_files():
-    local('docker cp ./source/VehicleCounting {}:/'.format(TEST_IMAGE_NAME))
+    # local('docker cp ./source/VehicleCounting {}:/'.format(TEST_IMAGE_NAME))
+    local('docker cp ./ {}:/workdir'.format(TEST_IMAGE_NAME))
+
+
+def docker_clear_stage():
+    with settings(warn_only=True):
+        local('docker kill $(docker ps -q -a)')
+        local('docker rm $(docker ps -q -a)')
 
 
 @task
 def up():
-    with settings(warn_only=True):
-        local('docker kill $(docker ps -q -a)')
-        local('docker rm $(docker ps -q -a)')
+    docker_clear_stage()
 
     with settings(warn_only=True):
         local('docker kill {}'.format(TEST_IMAGE_NAME))
@@ -56,3 +74,20 @@ def up():
     local('docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME))
 
     local('docker start   {}  '.format(TEST_IMAGE_NAME))
+
+
+@task
+def testme(debug=False):
+    TEXT_DEBUG_ACTIVE = 'debug active, ignore delete docker'
+    TEXT_CLEAR_CONTAINER = 'cleaning container'
+    up()
+    sync_proj_files()
+    with settings(warn_only=True):
+        local('docker exec test_ubuntu_opencv python /workdir/source/VehicleCounting/VehicleCounting.py -vid /workdir/test/test_data/test.mp4')
+
+    if debug:
+        print_warnings(TEXT_DEBUG_ACTIVE)
+
+    else:
+        print_status(TEXT_CLEAR_CONTAINER)
+        docker_clear_stage()
