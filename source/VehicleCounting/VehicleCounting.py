@@ -266,7 +266,6 @@ def processVideo(videoFilename):
         cv2.rectangle(frame, (10, 22), (100, 40), (255, 255, 255), -1)
         cv2.putText(frame, counting, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
-        # TODO: resume me
         # show
         if display_video_window:
             cv2.imshow("Frame", frame)
