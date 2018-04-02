@@ -43,6 +43,11 @@ init_logging()
 display_video_window = run_settings.display_video_window
 
 
+class video_properties():
+    height = 0
+    width = 0
+
+
 def help():
     print("--------------------------------------------------------------------------")
     print("Uasge:")
@@ -184,6 +189,43 @@ def test_counting(cap, peak_idx_current, peak_idx_last):
     return add_num
 
 
+def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap, add_num, total_num):
+    # output part
+
+    width_DVL = run_settings.width_DVL
+
+    # draw double virtual lines
+    cv2.line(frame, (0, height - 24), (width - 1, height - 24), (0, 0, 255), 2)
+    cv2.line(frame, (0, height - 24 - width_DVL), (width - 1, height - 24 - width_DVL), (0, 0, 255), 2)
+
+    # draw hulls
+    # draw vehicle location hist
+    histDisp = dispHist(tmp_conv, len(tmp_conv))
+    for i in range(len(peak_idx_current)):
+        cv2.line(histDisp, (peak_idx_current[i], 0), (peak_idx_current[i], histDisp.shape[0] - 1), (0), 2)
+
+    # find contours
+    __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for i in range(len(contours)):
+        hulls.append(cv2.convexHull(contours[i]))
+
+    # write the frame number on the current frame
+    numFrame = str(cap.get(cv2.CAP_PROP_POS_FRAMES))
+    cv2.rectangle(frame, (10, 2), (100, 20), (255, 255, 255), -1)
+    cv2.putText(frame, numFrame, (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+    # write counting results on the current frame
+    counting = "+" + str(add_num) + "   " + str(total_num)
+    cv2.rectangle(frame, (10, 22), (100, 40), (255, 255, 255), -1)
+    cv2.putText(frame, counting, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
+    # show
+    if display_video_window:
+        cv2.imshow("Frame", frame)
+        cv2.imshow("Vehicle Detection", objects)
+        cv2.imshow("Contours", contours)
+        cv2.imshow("Vehicle Location", histDisp)
+
+
 def processVideo(videoFilename):
     # NOTE: get settings
     width_lane = run_settings.width_lane
@@ -197,7 +239,7 @@ def processVideo(videoFilename):
     peak_idx_last = list()
 
     cap = open_video_source(videoFilename)
-    width, height = get_video_properties(cap)
+    video_properties.width, video_properties.height = get_video_properties(cap)
 
     # read input data & process
     # press'q' for quitting
@@ -218,60 +260,20 @@ def processVideo(videoFilename):
 
         objects = step_2_vehicle_detection(mask)
 
+        height = video_properties.height
+        width = video_properties.width
+
         tmp_conv = step_3_vehicle_location(objects, frame, height, width_DVL, width_lane)
 
         # step 4: vehicle counting
 
         num, peak_idx_current = detect_peaks(tmp_conv)
 
-        # # counting
-        # if int(cap.get(cv2.CAP_PROP_POS_FRAMES)) == 1:  # 1st frame
-        #     add_num = len(peak_idx_current)
-        # else:  # eliminate repeat counting
-        #     for i in range(len(peak_idx_current)):
-        #         for j in range(len(peak_idx_last)):
-        #             if abs(peak_idx_current[i] - peak_idx_last[j]) < min_value:
-        #                 min_value = abs(peak_idx_current[i] - peak_idx_last[j])
-        #         if min_value > T_VDist:
-        #             add_num = add_num + 1
-        #         min_value = 10000
-
         add_num = test_counting(cap, peak_idx_current, peak_idx_last)
 
         total_num = total_num + add_num
 
-        # find contours
-        __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        hulls = list()
-        for i in range(len(contours)):
-            hulls.append(cv2.convexHull(contours[i]))
-
-        # output part
-        # draw double virtual lines
-        cv2.line(frame, (0, height - 24), (width - 1, height - 24), (0, 0, 255), 2)
-        cv2.line(frame, (0, height - 24 - width_DVL), (width - 1, height - 24 - width_DVL), (0, 0, 255), 2)
-        # draw hulls
-        contours = np.zeros(objects.shape, dtype=np.uint8)
-        cv2.drawContours(frame, hulls, -1, (255))
-        # draw vehicle location hist
-        histDisp = dispHist(tmp_conv, len(tmp_conv))
-        for i in range(len(peak_idx_current)):
-            cv2.line(histDisp, (peak_idx_current[i], 0), (peak_idx_current[i], histDisp.shape[0] - 1), (0), 2)
-        # write the frame number on the current frame
-        numFrame = str(cap.get(cv2.CAP_PROP_POS_FRAMES))
-        cv2.rectangle(frame, (10, 2), (100, 20), (255, 255, 255), -1)
-        cv2.putText(frame, numFrame, (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-        # write counting results on the current frame
-        counting = "+" + str(add_num) + "   " + str(total_num)
-        cv2.rectangle(frame, (10, 22), (100, 40), (255, 255, 255), -1)
-        cv2.putText(frame, counting, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
-        # show
-        if display_video_window:
-            cv2.imshow("Frame", frame)
-            cv2.imshow("Vehicle Detection", objects)
-            cv2.imshow("Contours", contours)
-            cv2.imshow("Vehicle Location", histDisp)
+        draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap, add_num, total_num)
 
         # re-initialization
         add_num = 0
