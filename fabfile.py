@@ -7,11 +7,16 @@ from fabric.contrib.project import *
 
 DOCKER_DIR = './docker'
 
+
 docker_settings = {
     'DOCKER_DIR': DOCKER_DIR
 }
 
 TEST_IMAGE_NAME = 'test_ubuntu_opencv'
+KILLALL_DOCKER = 'docker kill {}'.format(TEST_IMAGE_NAME)
+RMALL_DOCKER = 'docker rm {}'.format(TEST_IMAGE_NAME)
+CREATE_DOCKER = 'docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME)
+START_DOCKER = 'docker start   {}  '.format(TEST_IMAGE_NAME)
 
 
 from fabric.colors import *
@@ -60,8 +65,9 @@ def sync_proj_files():
 
 def docker_clear_stage():
     with settings(warn_only=True):
-        local('docker kill $(docker ps -q -a)')
-        local('docker rm $(docker ps -q -a)')
+        [local(docker_command) for docker_command in [
+            KILLALL_DOCKER, RMALL_DOCKER
+        ]]
 
 
 @task
@@ -69,11 +75,13 @@ def up():
     docker_clear_stage()
 
     with settings(warn_only=True):
-        local('docker kill {}'.format(TEST_IMAGE_NAME))
-        local('docker rm {}'.format(TEST_IMAGE_NAME))
-    local('docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME))
+        [local(docker_command) for docker_command in [
+            CREATE_DOCKER, START_DOCKER
+        ]]
 
-    local('docker start   {}  '.format(TEST_IMAGE_NAME))
+    # local('docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME))
+
+    # local('docker start   {}  '.format(TEST_IMAGE_NAME))
 
 
 @task
@@ -83,7 +91,7 @@ def testme(debug=False):
     up()
     sync_proj_files()
     with settings(warn_only=True):
-        local('docker exec test_ubuntu_opencv python /workdir/source/VehicleCounting/VehicleCounting.py -vid /workdir/test/test_data/test.mp4')
+        local('docker exec test_ubuntu_opencv python /workdir/source/VehicleCounting.py -vid /workdir/test/test_data/test.mp4')
 
     if debug:
         print_warnings(TEXT_DEBUG_ACTIVE)

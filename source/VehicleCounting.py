@@ -206,6 +206,7 @@ def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap
 
     # find contours
     __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    hulls = list()
     for i in range(len(contours)):
         hulls.append(cv2.convexHull(contours[i]))
 
