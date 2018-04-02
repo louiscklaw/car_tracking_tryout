@@ -165,6 +165,25 @@ def detect_peaks(tmp_conv):
     return num, peak_idx_current
 
 
+def test_counting(cap, peak_idx_current, peak_idx_last):
+    min_value = 10000
+    T_VDist = run_settings.T_VDist
+    add_num = 0
+
+    # counting
+    if int(cap.get(cv2.CAP_PROP_POS_FRAMES)) == 1:  # 1st frame
+        add_num = len(peak_idx_current)
+    else:  # eliminate repeat counting
+        for i in range(len(peak_idx_current)):
+            for j in range(len(peak_idx_last)):
+                if abs(peak_idx_current[i] - peak_idx_last[j]) < min_value:
+                    min_value = abs(peak_idx_current[i] - peak_idx_last[j])
+            if min_value > T_VDist:
+                add_num = add_num + 1
+            min_value = 10000
+    return add_num
+
+
 def processVideo(videoFilename):
     # NOTE: get settings
     width_lane = run_settings.width_lane
@@ -174,7 +193,6 @@ def processVideo(videoFilename):
 
     # NOTE: init value
     total_num = 0
-    add_num = 0
 
     peak_idx_last = list()
 
@@ -188,7 +206,6 @@ def processVideo(videoFilename):
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
 
     while True:
-        min = 10000
 
         ret, frame = cap.read()
         if not ret:
@@ -207,18 +224,22 @@ def processVideo(videoFilename):
 
         num, peak_idx_current = detect_peaks(tmp_conv)
 
-        # counting
-        if int(cap.get(cv2.CAP_PROP_POS_FRAMES)) == 1:  # 1st frame
-            add_num = len(peak_idx_current)
-        else:  # eliminate repeat counting
-            for i in range(len(peak_idx_current)):
-                for j in range(len(peak_idx_last)):
-                    if abs(peak_idx_current[i] - peak_idx_last[j]) < min:
-                        min = abs(peak_idx_current[i] - peak_idx_last[j])
-                if min > T_VDist:
-                    add_num = add_num + 1
-                min = 10000
+        # # counting
+        # if int(cap.get(cv2.CAP_PROP_POS_FRAMES)) == 1:  # 1st frame
+        #     add_num = len(peak_idx_current)
+        # else:  # eliminate repeat counting
+        #     for i in range(len(peak_idx_current)):
+        #         for j in range(len(peak_idx_last)):
+        #             if abs(peak_idx_current[i] - peak_idx_last[j]) < min_value:
+        #                 min_value = abs(peak_idx_current[i] - peak_idx_last[j])
+        #         if min_value > T_VDist:
+        #             add_num = add_num + 1
+        #         min_value = 10000
+
+        add_num = test_counting(cap, peak_idx_current, peak_idx_last)
+
         total_num = total_num + add_num
+
         # find contours
         __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         hulls = list()
@@ -245,7 +266,6 @@ def processVideo(videoFilename):
         cv2.rectangle(frame, (10, 22), (100, 40), (255, 255, 255), -1)
         cv2.putText(frame, counting, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
-        # TODO: resume me
         # show
         if display_video_window:
             cv2.imshow("Frame", frame)
