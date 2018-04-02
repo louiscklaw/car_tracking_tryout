@@ -188,7 +188,7 @@ def processVideo(videoFilename):
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
 
     while True:
-        min = 10000
+        min_value = 10000
 
         ret, frame = cap.read()
         if not ret:
@@ -213,11 +213,11 @@ def processVideo(videoFilename):
         else:  # eliminate repeat counting
             for i in range(len(peak_idx_current)):
                 for j in range(len(peak_idx_last)):
-                    if abs(peak_idx_current[i] - peak_idx_last[j]) < min:
-                        min = abs(peak_idx_current[i] - peak_idx_last[j])
-                if min > T_VDist:
+                    if abs(peak_idx_current[i] - peak_idx_last[j]) < min_value:
+                        min_value = abs(peak_idx_current[i] - peak_idx_last[j])
+                if min_value > T_VDist:
                     add_num = add_num + 1
-                min = 10000
+                min_value = 10000
         total_num = total_num + add_num
         # find contours
         __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
