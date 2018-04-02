@@ -2,13 +2,13 @@
 
 """car tracking with python and opencv
 
-to run:
+To run:
     with cam:
         python VehicleCounting.py -vid 0
     with video file:
         python VehicleCounting.py -vid <video_filename>
 
-Todo:
+TODO:
     * For module TODOs
 
 Ref/source:
@@ -37,6 +37,10 @@ from res.run_logging import *
 
 # NOTE: init_logging
 init_logging()
+
+
+# NOTE: global space settings
+display_video_window = run_settings.display_video_window
 
 
 def help():
@@ -126,18 +130,52 @@ def get_video_properties(cap):
         logging.error(ERRORS.GETTING_PROPERTIES_FROM_SOURCE)
 
 
+def detect_peaks(tmp_conv):
+    # NOTE: settings
+    T_HDist = run_settings.T_HDist
+    T_s = run_settings.T_s
+
+    # NOTE: init variables
+    num = 0
+    space = 20
+
+    peak_idx_current = list()
+
+    # detect all the peak candidates
+    for i in range(len(tmp_conv)):
+        if i < space:
+            continue
+        elif i > len(tmp_conv) - space:  # // only compare with former elements
+            if (tmp_conv[i] > T_s) & (tmp_conv[i] > tmp_conv[i - space]):
+                if len(peak_idx_current) == 0:
+                    peak_idx_current.append(i)
+                    num = num + 1
+                elif abs(i - peak_idx_current[num - 1]) > T_HDist:
+                    peak_idx_current.append(i)
+                    num = num + 1
+        else:  # compare with both former and latter elements
+            if (tmp_conv[i] > T_s) & (tmp_conv[i] > tmp_conv[i - space]) & (tmp_conv[i] > tmp_conv[i + space - 1]):
+                if len(peak_idx_current) == 0:
+                    peak_idx_current.append(i)
+                    num = num + 1
+                elif abs(i - peak_idx_current[num - 1]) > T_HDist:
+                    peak_idx_current.append(i)
+                    num = num + 1
+
+    return num, peak_idx_current
+
+
 def processVideo(videoFilename):
     # NOTE: get settings
     width_lane = run_settings.width_lane
     width_DVL = run_settings.width_DVL
-    T_HDist = run_settings.T_HDist
+
     T_VDist = run_settings.T_VDist
-    T_s = run_settings.T_s
 
     # NOTE: init value
     total_num = 0
     add_num = 0
-    peak_idx_current = list()
+
     peak_idx_last = list()
 
     cap = open_video_source(videoFilename)
@@ -150,6 +188,7 @@ def processVideo(videoFilename):
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
 
     while True:
+        min = 10000
 
         ret, frame = cap.read()
         if not ret:
@@ -165,30 +204,9 @@ def processVideo(videoFilename):
         tmp_conv = step_3_vehicle_location(objects, frame, height, width_DVL, width_lane)
 
         # step 4: vehicle counting
-        num = 0
-        space = 20
-        min = 10000
 
-        # detect all the peak candidates
-        for i in range(len(tmp_conv)):
-            if i < space:
-                continue
-            elif i > len(tmp_conv) - space:  # // only compare with former elements
-                if (tmp_conv[i] > T_s) & (tmp_conv[i] > tmp_conv[i - space]):
-                    if len(peak_idx_current) == 0:
-                        peak_idx_current.append(i)
-                        num = num + 1
-                    elif abs(i - peak_idx_current[num - 1]) > T_HDist:
-                        peak_idx_current.append(i)
-                        num = num + 1
-            else:  # compare with both former and latter elements
-                if (tmp_conv[i] > T_s) & (tmp_conv[i] > tmp_conv[i - space]) & (tmp_conv[i] > tmp_conv[i + space - 1]):
-                    if len(peak_idx_current) == 0:
-                        peak_idx_current.append(i)
-                        num = num + 1
-                    elif abs(i - peak_idx_current[num - 1]) > T_HDist:
-                        peak_idx_current.append(i)
-                        num = num + 1
+        num, peak_idx_current = detect_peaks(tmp_conv)
+
         # counting
         if int(cap.get(cv2.CAP_PROP_POS_FRAMES)) == 1:  # 1st frame
             add_num = len(peak_idx_current)
@@ -226,12 +244,15 @@ def processVideo(videoFilename):
         counting = "+" + str(add_num) + "   " + str(total_num)
         cv2.rectangle(frame, (10, 22), (100, 40), (255, 255, 255), -1)
         cv2.putText(frame, counting, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-        # show
-        cv2.imshow("Frame", frame)
-        cv2.imshow("Vehicle Detection", objects)
 
-        cv2.imshow("Contours", contours)
-        cv2.imshow("Vehicle Location", histDisp)
+        # TODO: resume me
+        # show
+        if display_video_window:
+            cv2.imshow("Frame", frame)
+            cv2.imshow("Vehicle Detection", objects)
+            cv2.imshow("Contours", contours)
+            cv2.imshow("Vehicle Location", histDisp)
+
         # re-initialization
         add_num = 0
         peak_idx_last = copy.deepcopy(peak_idx_current)
@@ -250,6 +271,7 @@ def processVideo(videoFilename):
 
 
 def main():
+
     # print help information
     help()
     # check for the input parameter correctness
@@ -257,12 +279,16 @@ def main():
         print("Incorret input list")
         print("exiting...")
         return
+
+    # TODO: resume me
     # create GUI windows
 
-    cv2.namedWindow("Vehicle Detection")
-    cv2.namedWindow("Contours")
-    cv2.namedWindow("Vehicle Location")
-    cv2.namedWindow("Frame")
+    if display_video_window:
+        cv2.namedWindow("Vehicle Detection")
+        cv2.namedWindow("Contours")
+        cv2.namedWindow("Vehicle Location")
+        cv2.namedWindow("Frame")
+
     # run algorithm
     if sys.argv[1] == "-vid":
         processVideo(sys.argv[2])

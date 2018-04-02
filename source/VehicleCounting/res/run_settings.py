@@ -9,6 +9,8 @@ from pprint import pprint
 
 
 class run_settings():
+    # False to run in console
+    display_video_window = False
 
     width_lane = 100
     width_DVL = 100
