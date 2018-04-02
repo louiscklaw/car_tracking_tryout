@@ -5,6 +5,18 @@ import sys
 import copy
 import numpy as np
 
+import logging
+
+
+# NOTE: custom import
+
+from res.const import *
+from res.run_settings import *
+from res.run_logging import *
+
+# NOTE: init_logging
+init_logging()
+
 
 def help():
     print("--------------------------------------------------------------------------")
@@ -66,30 +78,52 @@ def step_3_vehicle_location(objects, frame, height, width_DVL, width_lane):
     return tmp_conv
 
 
-def processVideo(videoFilename):
-    if videoFilename == "0":
-        cap = cv2.VideoCapture(0)
-    else:
-        cap = cv2.VideoCapture(videoFilename)
-    if not cap.isOpened():
-        print("Unable to open video file: " + videoFilename)
-        return
-    else:
+def open_video_source(videoFilename):
+    try:
+        logging.info(STATUS.OPENING_VIDEO)
+
+        if videoFilename == "0":
+            cap = cv2.VideoCapture(0)
+        else:
+            cap = cv2.VideoCapture(videoFilename)
+
+        return cap
+
+    except Exception as e:
+        logging.error(ERRORS.OPEN_VIDEO_SOURCE)
+
+
+def get_video_properties(cap):
+    try:
+        logging.info(STATUS.GETTING_PROPERTIES_FROM_SOURCE)
+
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        print('dump width,height:{},{}'.format(width, height))
+        return width, height
 
-    # read input data & process
-    # press'q' for quitting
-    width_lane = 100
-    width_DVL = 100
-    T_HDist = 60
-    T_VDist = 100
-    T_s = 0.3
+    except Exception as e:
+        logging.error(ERRORS.GETTING_PROPERTIES_FROM_SOURCE)
+
+
+def processVideo(videoFilename):
+    # NOTE: get settings
+    width_lane = run_settings.width_lane
+    width_DVL = run_settings.width_DVL
+    T_HDist = run_settings.T_HDist
+    T_VDist = run_settings.T_VDist
+    T_s = run_settings.T_s
+
+    # NOTE: init value
     total_num = 0
     add_num = 0
     peak_idx_current = list()
     peak_idx_last = list()
+
+    cap = open_video_source(videoFilename)
+    width, height = get_video_properties(cap)
+
+    # read input data & process
+    # press'q' for quitting
 
     # background subtractor
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
