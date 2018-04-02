@@ -11,6 +11,7 @@ docker_settings = {
     'DOCKER_DIR': DOCKER_DIR
 }
 
+TEST_IMAGE_NAME = 'test_ubuntu_opencv'
 
 from multiprocessing import Pool
 
@@ -39,15 +40,19 @@ docker push logickee/ubuntu_opencv
 
 
 @task
+def sync_proj_files():
+    local('docker cp ./src/VehicleCounting {}:/'.format(TEST_IMAGE_NAME))
+
+
+@task
 def up():
     with settings(warn_only=True):
         local('docker kill $(docker ps -q -a)')
         local('docker rm $(docker ps -q -a)')
 
-    TEST_IMAGE_NAME = 'test_ubuntu_opencv'
     with settings(warn_only=True):
         local('docker kill {}'.format(TEST_IMAGE_NAME))
         local('docker rm {}'.format(TEST_IMAGE_NAME))
     local('docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME))
-    local('docker cp ./src/VehicleCounting {}:/workdir'.format(TEST_IMAGE_NAME))
+
     local('docker start   {}  '.format(TEST_IMAGE_NAME))
