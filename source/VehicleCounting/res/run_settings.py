@@ -8,7 +8,14 @@ import traceback
 from pprint import pprint
 
 
+CWD = os.path.dirname(os.path.abspath(__file__))
+PROJ_DIR = os.path.sep.join([CWD, '..'])
+SETTING_DIR = os.path.sep.join([PROJ_DIR, 'settings'])
+
+
 class run_settings():
+    # False to run in console
+    display_video_window = False
 
     width_lane = 100
     width_DVL = 100
