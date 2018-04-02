@@ -41,7 +41,7 @@ docker push logickee/ubuntu_opencv
 
 @task
 def sync_proj_files():
-    local('docker cp ./src/VehicleCounting {}:/'.format(TEST_IMAGE_NAME))
+    local('docker cp ./source/VehicleCounting {}:/'.format(TEST_IMAGE_NAME))
 
 
 @task
