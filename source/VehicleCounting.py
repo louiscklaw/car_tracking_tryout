@@ -42,6 +42,8 @@ init_logging()
 # NOTE: global space settings
 display_video_window = run_settings.display_video_window
 
+offset_height = 48 + 53 + 40
+
 
 class video_properties():
     height = 0
@@ -103,7 +105,7 @@ def step_2_vehicle_detection(mask):
 
 def step_3_vehicle_location(objects, frame, height, width_DVL, width_lane):
     # step 3: vehicle location
-    detect_zone = np.copy(objects[height - 24 - width_DVL:height - 24, 0:frame.shape[1]])
+    detect_zone = np.copy(objects[height - offset_height - width_DVL:height - offset_height, 0:frame.shape[1]])
     tmp_conv = vehicle_location(detect_zone, width_lane, width_DVL)
     return tmp_conv
 
@@ -195,8 +197,8 @@ def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap
     width_DVL = run_settings.width_DVL
 
     # draw double virtual lines
-    cv2.line(frame, (0, height - 24), (width - 1, height - 24), (0, 0, 255), 2)
-    cv2.line(frame, (0, height - 24 - width_DVL), (width - 1, height - 24 - width_DVL), (0, 0, 255), 2)
+    cv2.line(frame, (0, height - offset_height), (width - 1, height - offset_height), (0, 0, 255), 2)
+    cv2.line(frame, (0, height - offset_height - width_DVL), (width - 1, height - offset_height - width_DVL), (0, 0, 255), 2)
 
     # draw hulls
     # draw vehicle location hist
@@ -223,7 +225,7 @@ def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap
     if display_video_window:
         cv2.imshow("Frame", frame)
         cv2.imshow("Vehicle Detection", objects)
-        cv2.imshow("Contours", contours)
+        # cv2.imshow("Contours", contours)
         cv2.imshow("Vehicle Location", histDisp)
 
 
@@ -249,7 +251,6 @@ def processVideo(videoFilename):
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
 
     while True:
-
         ret, frame = cap.read()
         if not ret:
             print("Unable to read next frame.")

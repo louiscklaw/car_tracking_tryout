@@ -38,7 +38,11 @@ COPY_SOURCE_DOCKER = 'docker cp ./ {}:/workdir'.format(TEST_IMAGE_NAME)
 
 class test_setting():
     DOCKER_WORK_DIR = '/workdir'
-    TEST_SCRIPT = os.path.sep.join([DOCKER_WORK_DIR, 'source/VehicleCounting.py'])
+    DOCKER_TEST_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'test'])
+    DOCKER_TEST_DATA_DIR = os.path.sep.join([DOCKER_TEST_DIR, 'test_data'])
+
+    DOCKER_SOURCE_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'source'])
+    TEST_SCRIPT = os.path.sep.join([DOCKER_SOURCE_DIR, 'VehicleCounting.py'])
 
 
 def run_command(commands):
@@ -116,8 +120,7 @@ class Test_car_track(unittest.TestCase):
         docker_recreate()
         docker_copy_source()
 
-        test_command = 'docker exec {container_name} python  {test_script} -vid {video_file}'.format(
-            container_name=TEST_IMAGE_NAME,
+        test_command = 'python  {test_script} -vid {video_file}'.format(
             test_script=test_setting.TEST_SCRIPT,
             video_file=video_file)
         # command = 'docker exec test_ubuntu_opencv ls'
@@ -131,10 +134,13 @@ class Test_car_track(unittest.TestCase):
 
     def test_default_video(self):
         test_set = {
-            '/workdir/test/test_data/test.mp4': "52"
+            'origional_test.mp4': "52",
+            # 'VID_20180402_154210.mp4': "128"
         }
 
         for video_file, no_of_car in test_set.items():
+            print('testing with video {}'.format(video_file))
+            video_file = os.path.sep.join([test_setting.DOCKER_TEST_DATA_DIR, video_file])
             self.car_count_using_video(no_of_car, video_file)
 
 
