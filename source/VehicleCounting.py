@@ -42,7 +42,9 @@ init_logging()
 # NOTE: global space settings
 display_video_window = run_settings.display_video_window
 
-offset_height = 48 + 53 + 40
+# customize_offset_height=53+40
+customize_offset_height = 0
+offset_height = 24 + customize_offset_height
 
 
 class video_properties():
