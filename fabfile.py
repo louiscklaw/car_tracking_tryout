@@ -157,3 +157,22 @@ def run_unittest():
     local('docker exec test_ubuntu_opencv python  /workdir/test/test_main.py')
 
     test_end(debug)
+
+
+@task
+def conv_video():
+
+    # render comamnds
+    VIDEO_DIRECTORY = '/home/logic/Videos/raw'
+    CONVERT_COMMAND = 'ffmpeg -i {raw_video} -filter:v scale=-1:480 -c:a copy -an {small_video}'
+    LIST_COMMAND = 'ls -1 {}/*.mp4'.format(VIDEO_DIRECTORY)
+
+    video_files=local(LIST_COMMAND, capture=True).split('\n')
+    video_files = [video_file.strip() for video_file in video_files]
+    small_video_filenames = [video_filename.replace('.mp4','_small.mp4') for video_filename in video_files]
+
+    for raw_filename, small_filename in zip(video_files, small_video_filenames):
+        local(CONVERT_COMMAND.format(
+            raw_video=raw_filename,
+            small_video=small_filename
+        ))

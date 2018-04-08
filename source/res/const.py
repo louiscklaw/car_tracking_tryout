@@ -18,3 +18,7 @@ class STATUS():
 class ERRORS():
     OPEN_VIDEO_SOURCE = 'error opening video source'
     GETTING_PROPERTIES_FROM_SOURCE = 'error during getting properties from video source'
+
+class EXITS():
+    CLEAR_EXIT = 0
+    ERROR_EXIT = -1

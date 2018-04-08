@@ -208,11 +208,16 @@ def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap
     for i in range(len(peak_idx_current)):
         cv2.line(histDisp, (peak_idx_current[i], 0), (peak_idx_current[i], histDisp.shape[0] - 1), (0), 2)
 
+
+
     # find contours
     __, contours, __ = cv2.findContours(objects, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     hulls = list()
     for i in range(len(contours)):
         hulls.append(cv2.convexHull(contours[i]))
+
+    # drawing = np.zeros(objects.shape, dtype=np.uint8)
+    # cv2.drawContours(drawing, hulls, -1, (255))
 
     # write the frame number on the current frame
     numFrame = str(cap.get(cv2.CAP_PROP_POS_FRAMES))
@@ -227,7 +232,7 @@ def draw_on_video(frame, height, width, tmp_conv, peak_idx_current, objects, cap
     if display_video_window:
         cv2.imshow("Frame", frame)
         cv2.imshow("Vehicle Detection", objects)
-        # cv2.imshow("Contours", contours)
+        # cv2.imshow("Contours", drawing)
         cv2.imshow("Vehicle Location", histDisp)
 
 
@@ -252,8 +257,12 @@ def processVideo(videoFilename):
     # background subtractor
     pMOG = cv2.bgsegm.createBackgroundSubtractorMOG()
 
+    total_number_of_frame = 0
+
     while True:
         ret, frame = cap.read()
+        total_number_of_frame+=1
+
         if not ret:
             print("Unable to read next frame.")
             print("Exiting...")
@@ -284,7 +293,7 @@ def processVideo(videoFilename):
         peak_idx_last = copy.deepcopy(peak_idx_current)
         peak_idx_current = list()
 
-        c = cv2.waitKey(30)
+        c = cv2.waitKey(run_settings.pause_between_screen)
         if c >= 0:
             if chr(c) == 'q':
                 break
@@ -298,33 +307,36 @@ def processVideo(videoFilename):
 
 def main():
 
-    # print help information
-    help()
+
     # check for the input parameter correctness
     if len(sys.argv) != 3:
+        # print help information
+        help()
+
         print("Incorret input list")
         print("exiting...")
         return
 
-    # TODO: resume me
-    # create GUI windows
-
-    if display_video_window:
-        cv2.namedWindow("Vehicle Detection")
-        cv2.namedWindow("Contours")
-        cv2.namedWindow("Vehicle Location")
-        cv2.namedWindow("Frame")
-
     # run algorithm
     if sys.argv[1] == "-vid":
+        if display_video_window:
+            # create GUI windows
+            cv2.namedWindow("Vehicle Detection")
+            # cv2.namedWindow("Contours")
+            cv2.namedWindow("Vehicle Location")
+            cv2.namedWindow("Frame")
+
         processVideo(sys.argv[2])
+
+        # destroy GUI windows
+        cv2.destroyAllWindows()
+
     else:
         print("Please, check the input parameters.")
         print("exiting...")
         return
-    # destroy GUI windows
-    cv2.destroyAllWindows()
 
+    sys.exit(EXITS.CLEAR_EXIT)
 
 if __name__ == "__main__":
     main()

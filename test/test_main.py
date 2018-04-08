@@ -125,19 +125,21 @@ class Test_car_track(unittest.TestCase):
             video_file=video_file)
         # command = 'docker exec test_ubuntu_opencv ls'
 
-        result = subprocess.check_output(test_command, shell=True)
+        docker_exec_command = 'docker exec test_ubuntu_opencv {}'.format(
+            test_command
+        )
+
+        result = subprocess.check_output(docker_exec_command, shell=True)
         result = result.decode('utf-8')
 
         self.assertIn('total number of vehicles: {}\n'.format(expecting_car_number), result, 'the counting not correct, result from output {}'.format(result))
-
         # docker_cleanup()
-
-
 
     def test_default_video(self):
         test_set = {
             'origional_test.mp4': "52",
-            # 'VID_20180402_154210.mp4': "128"
+            # 'VID_20180402_154210.mp4': "128",
+            'VID_20180407_175555_small.mp4':'34',
         }
 
         for video_file, no_of_car in test_set.items():
