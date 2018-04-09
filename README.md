@@ -1,4 +1,4 @@
-### topics: vehicle / car tracking
+### topic: vehicle / car tracking
 
 ### preparing the test data
 ### to convert the video for test:
