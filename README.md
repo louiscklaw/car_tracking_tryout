@@ -12,3 +12,6 @@ vehicle / car tracking
 
 ### unittest
 * `python ./test/test_main.py`
+
+### logging/todo
+* to merge from fix/make-texts-class
