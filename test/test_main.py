@@ -24,17 +24,13 @@ SOURCE_DIR = os.path.sep.join([PROJ_HOME, 'source'])
 RES_DIR = os.path.sep.join([SOURCE_DIR, 'res'])
 SRC_DIR = os.path.sep.join([SOURCE_DIR, 'src'])
 
-
 sys.path += [TEST_SRC_DIR, TEST_RES_DIR, SRC_DIR, RES_DIR]
 
-
 TEST_IMAGE_NAME = 'test_ubuntu_opencv'
-KILLALL_DOCKER = 'docker kill {}'.format(TEST_IMAGE_NAME)
-RMALL_DOCKER = 'docker rm {}'.format(TEST_IMAGE_NAME)
-CREATE_DOCKER = 'docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME)
-START_DOCKER = 'docker start {} '.format(TEST_IMAGE_NAME)
-COPY_SOURCE_DOCKER = 'docker cp ./ {}:/workdir'.format(TEST_IMAGE_NAME)
 
+class RUN_ENV:
+    DOCKER_BIN_PATH=subprocess.check_output(['which','docker'])
+    PYTHON_BIN_PATH=subprocess.check_output(['which','python'])
 
 class ERROR_TEXTS:
     ERROR_CLEANUP_DOCKER = 'error during cleanup docker'
@@ -44,6 +40,7 @@ class ERROR_TEXTS:
 
 class STATUS_TEXTS:
     TEXT_COPY_SOURCE_DOCKER = 'coping source to docker'
+    TEXT_RECREATE_DOCKER='recreate docker'
 
 
 class test_setting():
@@ -54,44 +51,71 @@ class test_setting():
     DOCKER_SOURCE_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'source'])
     TEST_SCRIPT = os.path.sep.join([DOCKER_SOURCE_DIR, 'VehicleCounting.py'])
 
+class docker_commands:
+    def __init__(self):
+        pass
 
-def run_command(commands):
-    for command in commands:
-        print('running command {}'.format(command))
-        subprocess.check_output(command, shell=True)
+    def get_docker_exec_command(self, test_command):
 
+        return '{} exec {} {}'.format(RUN_ENV.DOCKER_BIN_PATH, TEST_IMAGE_NAME, test_command)
 
-def docker_cleanup():
-    try:
-        [run_command([KILLALL_DOCKER, RMALL_DOCKER])]
+    def get_killall_command(self):
+        return '{} kill {}'.format(RUN_ENV.DOCKER_BIN_PATH,TEST_IMAGE_NAME)
 
-    except Exception as e:
-        print(ERROR_TEXTS.ERROR_CLEANUP_DOCKER)
+    def get_rmall_command(self):
+        return '{} rm {}'.format(RUN_ENV.DOCKER_BIN_PATH,TEST_IMAGE_NAME)
 
+    def get_create_command(self):
+        return '{} create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(RUN_ENV.DOCKER_BIN_PATH,TEST_IMAGE_NAME)
 
-def docker_create():
+    def get_start_command(self):
+        return '{} start {} '.format(RUN_ENV.DOCKER_BIN_PATH,TEST_IMAGE_NAME)
 
-    try:
-        [run_command([CREATE_DOCKER, START_DOCKER])]
-    except Exception as e:
-        print(ERROR_TEXTS.ERROR_CREATE_DOCKER)
-
-
-def docker_recreate():
-    try:
-        print('recreate docker')
-        docker_cleanup()
-        docker_create()
-    except Exception as e:
-        print(ERROR_TEXTS.ERROR_RECREATE_DOCKER)
+    def get_copy_source_command(self):
+        return '{} cp ./ {}:/workdir'.format(RUN_ENV.DOCKER_BIN_PATH,TEST_IMAGE_NAME)
 
 
-def docker_copy_source():
-    try:
-        print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
-        run_command([COPY_SOURCE_DOCKER])
-    except Exception as e:
-        print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
+    def run_command(self, commands):
+        for command in commands:
+            print('running command {}'.format(command))
+            subprocess.check_output(command, shell=True)
+
+    def docker_cleanup(self):
+        try:
+            # [run_command([KILLALL_DOCKER, RMALL_DOCKER])]
+            [self.run_command([
+                self.get_killall_command(),
+                self.get_rmall_command()
+            ])]
+
+        except Exception as e:
+            print(ERROR_TEXTS.ERROR_CLEANUP_DOCKER)
+
+    def docker_create(self):
+        try:
+            [run_command([
+                self.get_create_command(),
+                self.get_start_command()
+                ])]
+        except Exception as e:
+            print(ERROR_TEXTS.ERROR_CREATE_DOCKER)
+
+
+    def docker_recreate(self):
+        try:
+            print(STATUS_TEXTS.TEXT_RECREATE_DOCKER)
+            docker_cleanup()
+            docker_create()
+        except Exception as e:
+            print(ERROR_TEXTS.ERROR_RECREATE_DOCKER)
+
+
+    def docker_copy_source(self):
+        try:
+            print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
+            run_command([self.get_copy_source_command()])
+        except Exception as e:
+            print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
 
 
 def setUpModule():
@@ -114,6 +138,7 @@ class Test_car_track(unittest.TestCase):
 
     def setUp(self):
         print('setup (car_track) test')
+        self.docker_commands=docker_commands()
 
     def tearDown(self):
         print('teardown (car_track) test')
@@ -123,22 +148,23 @@ class Test_car_track(unittest.TestCase):
     #     const.init_logging()
 
     def car_count_using_video(self, expecting_car_number, video_file):
-        # docker_recreate()
-        # docker_copy_source()
+        self.docker_commands.docker_recreate()
+        self.docker_commands.docker_copy_source()
 
-        test_command = 'python {test_script} -vid {video_file}'.format(
+        test_command = '{PYTHON_BIN_PATH} {test_script} -vid {video_file}'.format(
+            PYTHON_BIN_PATH=RUN_ENV.PYTHON_BIN_PATH
             test_script=test_setting.TEST_SCRIPT,
             video_file=video_file)
         # command = 'docker exec test_ubuntu_opencv ls'
 
-        docker_exec_command = 'docker exec test_ubuntu_opencv {}'.format(
-            test_command
-        )
+        docker_exec_command = docker_command(test_command).get_docker_exec_command()
 
         result = subprocess.check_output(docker_exec_command, shell=True)
         result = result.decode('utf-8')
 
-        self.assertIn('total number of vehicles: {}\n'.format(expecting_car_number), result, 'the counting not correct, result from output {}'.format(result))
+        text_vehicle_counted='total number of vehicles: {}\n'.format(expecting_car_number)
+
+        self.assertIn(text_vehicle_counted, result, 'the counting not correct, result from output {}'.format(result))
         # docker_cleanup()
 
     def test_default_video(self):
@@ -149,8 +175,11 @@ class Test_car_track(unittest.TestCase):
         }
 
         for video_file, no_of_car in test_set.items():
-            print('testing with video {}'.format(video_file))
+            text_testing_video='testing with video {}'.format(video_file)
+            print(text_testing_video)
+
             video_file = os.path.sep.join([test_setting.DOCKER_TEST_DATA_DIR, video_file])
+
             self.car_count_using_video(no_of_car, video_file)
 
 
