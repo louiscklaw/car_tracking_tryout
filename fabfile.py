@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+"""
+Helloworld boilder plate
+
+Naming style guideline
+# https://google.github.io/styleguide/pyguide.html
+# http://www.sphinx-doc.org/en/master/ext/napoleon.html#docstring-sections
+
+"""
+
 from fabric.api import *
 from fabric.colors import *
 from fabric.context_managers import *
@@ -10,11 +19,10 @@ import time
 DOCKER_DIR = './docker'
 
 
-docker_settings = {
-    'DOCKER_DIR': DOCKER_DIR
-}
+docker_settings = {    'DOCKER_DIR': DOCKER_DIR}
 
 TEST_IMAGE_NAME = 'test_ubuntu_opencv'
+
 KILLALL_DOCKER = 'docker kill {}'.format(TEST_IMAGE_NAME)
 RMALL_DOCKER = 'docker rm {}'.format(TEST_IMAGE_NAME)
 CREATE_DOCKER = 'docker create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(TEST_IMAGE_NAME)
@@ -24,7 +32,13 @@ START_DOCKER = 'docker start   {}  '.format(TEST_IMAGE_NAME)
 from fabric.colors import *
 
 
-class test_setting():
+def print_status(text): print(green(text))
+def print_warnings(text): print(yellow(text))
+def print_error(text): print(red(text))
+
+
+
+class TestSettings():
     DOCKER_WORK_DIR = '/workdir'
     DOCKER_TEST_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'test'])
     DOCKER_TEST_DATA_DIR = os.path.sep.join([DOCKER_TEST_DIR, 'test_data'])
@@ -33,13 +47,12 @@ class test_setting():
     TEST_SCRIPT = os.path.sep.join([DOCKER_SOURCE_DIR, 'VehicleCounting.py'])
 
 
-def print_status(text): print(green(text))
+class RunEnv:
+    def get_bin(bin_name):
+        return subprocess.check_output(['which', bin_name]).strip()
 
-
-def print_warnings(text): print(yellow(text))
-
-
-def print_error(text): print(red(text))
+    DOCKER_BIN_PATH = get_bin('docker')
+    PYTHON_BIN_PATH = get_bin('python')
 
 
 from multiprocessing import Pool
@@ -122,7 +135,7 @@ def testme(debug=False):
 
         test_command = 'docker exec {container_name} python  {test_script} -vid {video_file}'.format(
             container_name=TEST_IMAGE_NAME,
-            test_script=test_setting.TEST_SCRIPT,
+            test_script=TestSettings.TEST_SCRIPT,
             video_file=video_file)
         # local('docker exec test_ubuntu_opencv python /workdir/source/VehicleCounting.py -vid /workdir/test/test_data/test.mp4')
 
