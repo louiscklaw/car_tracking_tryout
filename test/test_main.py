@@ -115,6 +115,15 @@ class docker_commands:
         except Exception as e:
             print(ERROR_TEXTS.ERROR_CREATE_DOCKER)
 
+    def docker_copy_source(self):
+        try:
+            print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
+            [self.run_command([
+                self.get_copy_source_command()
+            ])]
+        except Exception as e:
+            print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
+
     def docker_recreate(self):
         try:
             print(STATUS_TEXTS.TEXT_RECREATE_DOCKER)
@@ -122,13 +131,6 @@ class docker_commands:
             self.docker_create()
         except Exception as e:
             print(ERROR_TEXTS.ERROR_RECREATE_DOCKER)
-
-    def docker_copy_source(self):
-        try:
-            print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
-            self.run_command([self.get_copy_source_command()])
-        except Exception as e:
-            print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
 
 
 def setUpModule():
