@@ -37,7 +37,7 @@ SRC_DIR = os.path.sep.join([SOURCE_DIR, 'src'])
 sys.path += [TEST_SRC_DIR, TEST_RES_DIR, SRC_DIR, RES_DIR]
 
 
-class test_setting():
+class TestSettings():
     DOCKER_WORK_DIR = '/workdir'
     DOCKER_TEST_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'test'])
     DOCKER_TEST_DATA_DIR = os.path.sep.join([DOCKER_TEST_DIR, 'test_data'])
@@ -46,7 +46,7 @@ class test_setting():
     TEST_SCRIPT = os.path.sep.join([DOCKER_SOURCE_DIR, 'VehicleCounting.py'])
 
 
-class RUN_ENV:
+class RunEnv:
     def get_bin(bin_name):
         return subprocess.check_output(['which', bin_name]).strip()
 
@@ -54,19 +54,19 @@ class RUN_ENV:
     PYTHON_BIN_PATH = get_bin('python')
 
 
-class ERROR_TEXTS:
+class ErrorTexts:
     ERROR_CLEANUP_DOCKER = 'error during cleanup docker'
     ERROR_CREATE_DOCKER = 'error during create docker'
     ERROR_RECREATE_DOCKER = 'error during recreate docker'
     ERROR_COPY_SOURCE_DOCKER = 'error during copy source to docker'
 
 
-class STATUS_TEXTS:
+class StatusTexts:
     TEXT_COPY_SOURCE_DOCKER = 'coping source to docker'
     TEXT_RECREATE_DOCKER = 'recreate docker'
 
 
-class docker_commands:
+class DockerCommands:
     TEST_IMAGE_NAME = 'test_ubuntu_opencv'
 
     def __init__(self):
@@ -74,22 +74,22 @@ class docker_commands:
 
     def get_docker_exec_command(self, test_command):
 
-        return '{} exec {} {}'.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME, test_command)
+        return '{} exec {} {}'.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME, test_command)
 
     def get_killall_command(self):
-        return '{} kill {}'.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
+        return '{} kill {}'.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
 
     def get_rmall_command(self):
-        return '{} rm {}'.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
+        return '{} rm {}'.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
 
     def get_create_command(self):
-        return '{} create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
+        return '{} create --name {} -p 5901:5901 logickee/ubuntu_opencv'.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
 
     def get_start_command(self):
-        return '{} start {} '.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
+        return '{} start {} '.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
 
     def get_copy_source_command(self):
-        return '{} cp ./ {}:/workdir'.format(RUN_ENV.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
+        return '{} cp ./ {}:/workdir'.format(RunEnv.DOCKER_BIN_PATH, self.TEST_IMAGE_NAME)
 
     def run_command(self, commands):
         for command in commands:
@@ -104,7 +104,7 @@ class docker_commands:
             ])]
 
         except Exception as e:
-            print(ERROR_TEXTS.ERROR_CLEANUP_DOCKER)
+            print(ErrorTexts.ERROR_CLEANUP_DOCKER)
 
     def docker_create(self):
         try:
@@ -113,24 +113,24 @@ class docker_commands:
                 self.get_start_command()
             ])]
         except Exception as e:
-            print(ERROR_TEXTS.ERROR_CREATE_DOCKER)
+            print(ErrorTexts.ERROR_CREATE_DOCKER)
 
     def docker_copy_source(self):
         try:
-            print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
+            print(StatusTexts.TEXT_COPY_SOURCE_DOCKER)
             [self.run_command([
                 self.get_copy_source_command()
             ])]
         except Exception as e:
-            print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
+            print(ErrorTexts.ERROR_COPY_SOURCE_DOCKER)
 
     def docker_recreate(self):
         try:
-            print(STATUS_TEXTS.TEXT_RECREATE_DOCKER)
+            print(StatusTexts.TEXT_RECREATE_DOCKER)
             self.docker_cleanup()
             self.docker_create()
         except Exception as e:
-            print(ERROR_TEXTS.ERROR_RECREATE_DOCKER)
+            print(ErrorTexts.ERROR_RECREATE_DOCKER)
 
 
 def setUpModule():
@@ -141,7 +141,7 @@ def tearDownModule():
     print('teardown (car_track) module')
 
 
-class Test_car_track(unittest.TestCase):
+class TestCarTrack(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -154,7 +154,7 @@ class Test_car_track(unittest.TestCase):
     def setUp(self):
         print('setup (car_track) test')
         # init docker_commands object for getting docker command
-        self.docker_commands = docker_commands()
+        self.docker_commands = DockerCommands()
 
     def tearDown(self):
         print('teardown (car_track) test')
@@ -168,8 +168,8 @@ class Test_car_track(unittest.TestCase):
         self.docker_commands.docker_copy_source()
 
         test_command = '{PYTHON_BIN_PATH} {test_script} -vid {video_file}'.format(
-            PYTHON_BIN_PATH=RUN_ENV.PYTHON_BIN_PATH
-            test_script=test_setting.TEST_SCRIPT,
+            PYTHON_BIN_PATH=RunEnv.PYTHON_BIN_PATH
+            test_script=TestSettings.TEST_SCRIPT,
             video_file=video_file)
         # command = 'docker exec test_ubuntu_opencv ls'
 
@@ -194,7 +194,7 @@ class Test_car_track(unittest.TestCase):
             text_testing_video = 'testing with video {}'.format(video_file)
             print(text_testing_video)
 
-            video_file = os.path.sep.join([test_setting.DOCKER_TEST_DATA_DIR, video_file])
+            video_file = os.path.sep.join([TestSettings.DOCKER_TEST_DATA_DIR, video_file])
 
             self.car_count_using_video(no_of_car, video_file)
 
