@@ -36,6 +36,16 @@ START_DOCKER = 'docker start {} '.format(TEST_IMAGE_NAME)
 COPY_SOURCE_DOCKER = 'docker cp ./ {}:/workdir'.format(TEST_IMAGE_NAME)
 
 
+class ERROR_TEXTS:
+    ERROR_CLEANUP_DOCKER = 'error during cleanup docker'
+    ERROR_CREATE_DOCKER = 'error during create docker'
+    ERROR_RECREATE_DOCKER = 'error during recreate docker'
+    ERROR_COPY_SOURCE_DOCKER = 'error during copy source to docker'
+
+class STATUS_TEXTS:
+    TEXT_COPY_SOURCE_DOCKER = 'coping source to docker'
+
+
 class test_setting():
     DOCKER_WORK_DIR = '/workdir'
     DOCKER_TEST_DIR = os.path.sep.join([DOCKER_WORK_DIR, 'test'])
@@ -52,40 +62,36 @@ def run_command(commands):
 
 
 def docker_cleanup():
-    ERROR_CLEANUP_DOCKER = 'error during cleanup docker'
     try:
         [run_command([KILLALL_DOCKER, RMALL_DOCKER])]
 
     except Exception as e:
-        print(ERROR_CLEANUP_DOCKER)
+        print(ERROR_TEXTS.ERROR_CLEANUP_DOCKER)
 
 
 def docker_create():
-    ERROR_CREATE_DOCKER = 'error during create docker'
+
     try:
         [run_command([CREATE_DOCKER, START_DOCKER])]
     except Exception as e:
-        print(ERROR_CREATE_DOCKER)
+        print(ERROR_TEXTS.ERROR_CREATE_DOCKER)
 
 
 def docker_recreate():
-    ERROR_RECREATE_DOCKER = 'error during recreate docker'
     try:
         print('recreate docker')
         docker_cleanup()
         docker_create()
     except Exception as e:
-        print(ERROR_RECREATE_DOCKER)
+        print(ERROR_TEXTS.ERROR_RECREATE_DOCKER)
 
 
 def docker_copy_source():
-    TEXT_COPY_SOURCE_DOCKER = 'coping source to docker'
-    ERROR_COPY_SOURCE_DOCKER = 'error during copy source to docker'
     try:
-        print(TEXT_COPY_SOURCE_DOCKER)
+        print(STATUS_TEXTS.TEXT_COPY_SOURCE_DOCKER)
         run_command([COPY_SOURCE_DOCKER])
     except Exception as e:
-        print(ERROR_COPY_SOURCE_DOCKER)
+        print(ERROR_TEXTS.ERROR_COPY_SOURCE_DOCKER)
 
 
 def setUpModule():
